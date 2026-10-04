@@ -243,6 +243,11 @@ jobs:
             exit 1
           fi
 
+          # linuxdeploy leaves 0700 directories. Extracted by root and run as
+          # another user (the Debian smoke's smoke-user), AppRun hits EACCES
+          # (exit 126), so normalize modes before packing.
+          chmod -R u+rwX,go+rX,go-w squashfs-root
+
           ARCH=x86_64 /tmp/appimagetool squashfs-root "${appimage}"
           rm -rf squashfs-root
           echo "APPIMAGE=${appimage}" >> "$GITHUB_ENV"
