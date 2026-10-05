@@ -446,6 +446,10 @@ jobs:
               pacman -Q libavif libsharpyuv || true
               ls -l /usr/lib/libavif.so.* /usr/lib/libsharpyuv.so.* || true
 
+              # The stock archlinux image has no /etc/machine-id (real hosts do).
+              # screenpipe refuses to start without one (host_identity.rs).
+              dbus-uuidgen --ensure=/etc/machine-id
+
               useradd -m smoke-user
               chown -R smoke-user:smoke-user /smoke
               install -d -m 700 -o smoke-user -g smoke-user /tmp/screenpipe-runtime

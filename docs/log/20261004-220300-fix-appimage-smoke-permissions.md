@@ -71,3 +71,13 @@ Debian smoke passed. Arch smoke (previously skipped) failed with the same
 `su smoke-user`. Applied the same `chmod -R go+rX squashfs-root` after its extract.
 (`error: package 'libsharpyuv' was not found` in that log is the intentional
 `pacman -Q ... || true` probe, not a failure.)
+
+## Update 3: run 37264048125
+Arch now gets past the permission error and launches the app, then exits 101:
+`Failed to init settings store ... Could not read a stable machine identifier`
+(`enterprise/host_identity.rs`, `raw_machine_id`: reads /etc/machine-id then
+/var/lib/dbus/machine-id). The stock `archlinux:latest` image has neither
+(verified: `ls` -> No such file; `dbus-uuidgen --ensure=/etc/machine-id` creates a
+readable 33-byte file). Debian passes because installing `dbus` there creates
+/var/lib/dbus/machine-id. Fix is in the smoke container only; the app's strict
+behaviour was a deliberate choice (#6949) so I did not touch it.
