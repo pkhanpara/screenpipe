@@ -452,6 +452,8 @@ jobs:
               cd /smoke
               chmod +x screenpipe.AppImage
               ./screenpipe.AppImage --appimage-extract >/dev/null
+              # See the Debian smoke step: extraction yields 0700 root dirs.
+              chmod -R go+rX squashfs-root
 
               # The Ubuntu-built PipeWire client must use its matching config,
               # context modules, and SPA support plugins instead of Arch ones.

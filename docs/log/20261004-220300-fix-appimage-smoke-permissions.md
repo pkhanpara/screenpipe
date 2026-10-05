@@ -64,3 +64,10 @@ Real fix: `chmod -R go+rX squashfs-root` right after `--appimage-extract` in the
 Debian smoke. Verified in debian:trixie with root-owned tree + `su u` + the CI
 LD_LIBRARY_PATH: before = EACCES, after = AppRun executes. The repack chmod is
 kept (harmless, makes stored modes sane) but is not the fix.
+
+## Update 2: run 37261425430
+Debian smoke passed. Arch smoke (previously skipped) failed with the same
+`env: 'squashfs-root/AppRun': Permission denied` (rc 126) — same extraction, same
+`su smoke-user`. Applied the same `chmod -R go+rX squashfs-root` after its extract.
+(`error: package 'libsharpyuv' was not found` in that log is the intentional
+`pacman -Q ... || true` probe, not a failure.)
