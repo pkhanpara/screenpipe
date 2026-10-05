@@ -243,6 +243,10 @@ jobs:
             exit 1
           fi
 
+          # linuxdeploy leaves 0700 directories in the stored image; normalize
+          # them so the shipped modes are sane for any user.
+          chmod -R u+rwX,go+rX,go-w squashfs-root
+
           ARCH=x86_64 /tmp/appimagetool squashfs-root "${appimage}"
           rm -rf squashfs-root
           echo "APPIMAGE=${appimage}" >> "$GITHUB_ENV"
@@ -287,6 +291,9 @@ jobs:
               cd /smoke
               chmod +x screenpipe.AppImage
               ./screenpipe.AppImage --appimage-extract >/dev/null
+              # --appimage-extract creates 0700 root-owned directories whatever
+              # the image stores; smoke-user would get EACCES (exit 126) on AppRun.
+              chmod -R go+rX squashfs-root
 
               desktop=""
               for candidate in squashfs-root/usr/share/applications/*.desktop; do
@@ -439,12 +446,18 @@ jobs:
               pacman -Q libavif libsharpyuv || true
               ls -l /usr/lib/libavif.so.* /usr/lib/libsharpyuv.so.* || true
 
+              # The stock archlinux image has no /etc/machine-id (real hosts do).
+              # screenpipe refuses to start without one (host_identity.rs).
+              dbus-uuidgen --ensure=/etc/machine-id
+
               useradd -m smoke-user
               chown -R smoke-user:smoke-user /smoke
               install -d -m 700 -o smoke-user -g smoke-user /tmp/screenpipe-runtime
               cd /smoke
               chmod +x screenpipe.AppImage
               ./screenpipe.AppImage --appimage-extract >/dev/null
+              # See the Debian smoke step: extraction yields 0700 root dirs.
+              chmod -R go+rX squashfs-root
 
               # The Ubuntu-built PipeWire client must use its matching config,
               # context modules, and SPA support plugins instead of Arch ones.
