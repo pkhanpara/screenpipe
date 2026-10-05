@@ -243,9 +243,8 @@ jobs:
             exit 1
           fi
 
-          # linuxdeploy leaves 0700 directories. Extracted by root and run as
-          # another user (the Debian smoke's smoke-user), AppRun hits EACCES
-          # (exit 126), so normalize modes before packing.
+          # linuxdeploy leaves 0700 directories in the stored image; normalize
+          # them so the shipped modes are sane for any user.
           chmod -R u+rwX,go+rX,go-w squashfs-root
 
           ARCH=x86_64 /tmp/appimagetool squashfs-root "${appimage}"
@@ -292,6 +291,9 @@ jobs:
               cd /smoke
               chmod +x screenpipe.AppImage
               ./screenpipe.AppImage --appimage-extract >/dev/null
+              # --appimage-extract creates 0700 root-owned directories whatever
+              # the image stores; smoke-user would get EACCES (exit 126) on AppRun.
+              chmod -R go+rX squashfs-root
 
               desktop=""
               for candidate in squashfs-root/usr/share/applications/*.desktop; do

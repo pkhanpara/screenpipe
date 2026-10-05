@@ -1,6 +1,6 @@
 # Fix Linux AppImage Smoke: AppRun EACCES for non-root user
 
-Status: in progress (fix committed on `fix/appimage-smoke-permissions`, CI run pending)
+Status: in progress (attempt 2 pending CI)
 
 ## Why
 `.github/workflows/linux-appimage-smoke.yml` (scheduled) failed every day from
@@ -53,3 +53,14 @@ defect); run the smoke as root (loses the non-root coverage that caught this).
 - My local host umask is 002, but squashfs stores explicit modes, so extraction
   preserved 0700. A bind-mounted `chmod` inside docker modifies the host tree:
   re-extract before re-running a "before" repro.
+
+## Update: first fix did not work (run 37238682367)
+Repack chmod landed (`unsquashfs -ll` of new artifact: dirs `drwxr-xr-x`), yet the
+smoke still failed with the identical `Permission denied`, exit 126. Fresh
+`--appimage-extract` of that 755 image still produced `drwx------` dirs, so the
+extractor, not the image, creates the 0700 modes. My first diagnosis (stored
+modes) was incomplete: it was only verified against an extraction, not CI.
+Real fix: `chmod -R go+rX squashfs-root` right after `--appimage-extract` in the
+Debian smoke. Verified in debian:trixie with root-owned tree + `su u` + the CI
+LD_LIBRARY_PATH: before = EACCES, after = AppRun executes. The repack chmod is
+kept (harmless, makes stored modes sane) but is not the fix.
